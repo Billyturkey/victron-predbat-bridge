@@ -1,0 +1,71 @@
+{
+  "title": "Victron Predbat Bridge",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Confirm discovered Victron entities",
+        "description": "Entities from Victron GX or Victron MQTT are filled in when one clear match exists. Ambiguous fields remain blank. Check every selection. DANGER — USE ENTIRELY AT YOUR OWN RISK. Writes remain locked until separately acknowledged and enabled.",
+        "data": {
+          "battery_soc": "Battery SOC",
+          "battery_power": "Battery power",
+          "battery_voltage": "Battery voltage",
+          "grid_power": "Victron grid power",
+          "load_power": "Victron load power",
+          "pv_power": "DC PV power",
+          "ev_power": "External EV power (optional)",
+          "ac_setpoint": "GX AC power setpoint",
+          "max_charge_current": "Maximum charge current",
+          "max_inverter_power": "Maximum inverter power",
+          "min_soc": "Minimum SOC"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Only one Victron Predbat Bridge can be configured. Open the existing integration entry instead."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "System limits",
+        "description": "DANGER — USE ENTIRELY AT YOUR OWN RISK. This integration can write to battery and inverter controls. Wrong entities or limits can damage equipment, interrupt power, or breach grid limits. Confirm every entity and electrical limit with a qualified installer. Verification allowances are added to each selected number entity's advertised step; leave them at zero unless its feedback requires more. Risk acknowledgement only unlocks the separate Allow Victron writes switch.",
+        "data": {
+          "max_charge_power": "Maximum battery charge power",
+          "max_export_power": "Maximum battery discharge/export power",
+          "charge_current_limit": "Maximum battery charge current",
+          "normal_inverter_limit": "Normal combined inverter limit",
+          "max_victron_import": "Maximum import through the Victron branch",
+          "site_import_limit": "Whole-site import limit",
+          "grid_export_limit": "Grid export limit",
+          "standby_grid_target": "Normal grid target",
+          "reserve_floor": "Minimum battery reserve",
+          "min_battery_voltage": "Minimum valid battery voltage",
+          "max_battery_voltage": "Maximum valid battery voltage",
+          "conversion_efficiency": "AC/DC conversion efficiency",
+          "phase_count": "AC phase count",
+          "battery_positive_charging": "Battery power is positive while charging",
+          "grid_positive_import": "Grid power is positive while importing",
+          "request_timeout": "Predbat request timeout",
+          "writes_acknowledged": "I accept full responsibility and understand that enabling Allow Victron writes can control real electrical equipment",
+          "verify_grid_allowance": "Additional grid-setpoint verification allowance",
+          "verify_current_allowance": "Additional charge-current verification allowance",
+          "verify_inverter_allowance": "Additional inverter-limit verification allowance",
+          "verify_soc_allowance": "Additional minimum-SOC verification allowance",
+          "connected_entity": "Parallel inverter system connected",
+          "ess_mode_entity": "ESS BatteryLife mode",
+          "hub4_mode_entity": "ESS Hub4 mode",
+          "dess_mode_entity": "Dynamic ESS mode",
+          "inverter_mode_entity": "Inverter/charger mode",
+          "schedule_0_entity": "Native charge schedule 0 days",
+          "schedule_1_entity": "Native charge schedule 1 days",
+          "schedule_2_entity": "Native charge schedule 2 days",
+          "schedule_3_entity": "Native charge schedule 3 days",
+          "schedule_4_entity": "Native charge schedule 4 days"
+        }
+      }
+    },
+    "error": {
+      "invalid_voltage_range": "Maximum battery voltage must be greater than minimum battery voltage."
+    }
+  }
+}

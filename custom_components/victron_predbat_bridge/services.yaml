@@ -1,0 +1,36 @@
+request:
+  name: Receive Predbat request
+  description: Calculate shadow commands from a Predbat request. No Victron values are written.
+  fields:
+    direction:
+      name: Direction
+      required: true
+      selector:
+        select:
+          options:
+            - charge
+            - export
+    request:
+      name: Request
+      required: true
+      selector:
+        select:
+          options:
+            - "off"
+            - charge
+            - export
+            - preserve
+    target_soc:
+      name: Target SOC
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    power:
+      name: Power
+      selector:
+        number:
+          min: 0
+          max: 30000
+          unit_of_measurement: W

@@ -1,0 +1,286 @@
+title: Victron Predbat Bridge
+views:
+  - title: Bridge
+    path: bridge
+    icon: mdi:home-battery
+    type: sections
+    max_columns: 4
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Bridge control
+            icon: mdi:shield-lock
+          - type: tile
+            entity: switch.victron_predbat_bridge_control
+            name: Process Predbat requests
+            color: blue
+          - type: tile
+            entity: switch.victron_predbat_bridge_allow_victron_writes
+            name: Allow Victron writes
+            color: red
+          - type: markdown
+            title: Current state
+            content: >-
+              **{{ states('sensor.victron_predbat_bridge_controller_status') }}**
+
+              Write status: **{{ states('sensor.victron_predbat_bridge_write_status') }}**  
+              Ownership: **{{ states('sensor.victron_predbat_bridge_settings_ownership') }}**  
+              Writes: **{{ states('sensor.victron_predbat_bridge_writes_active') }}**  
+              Armed: **{{ states('sensor.victron_predbat_bridge_writes_armed') }}**
+          - type: entities
+            title: Planned commands
+            show_header_toggle: false
+            entities:
+              - entity: sensor.victron_predbat_bridge_shadow_intent
+                name: Intent
+              - entity: sensor.victron_predbat_bridge_shadow_grid_setpoint
+                name: Grid setpoint
+              - entity: sensor.victron_predbat_bridge_shadow_maximum_charge_current
+                name: Maximum charge current
+              - entity: sensor.victron_predbat_bridge_shadow_inverter_limit
+                name: Inverter limit
+              - entity: sensor.victron_predbat_bridge_shadow_minimum_soc
+                name: Minimum SOC
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Safety and freshness
+            icon: mdi:shield-check
+          - type: entities
+            show_header_toggle: false
+            state_color: true
+            entities:
+              - entity: sensor.victron_predbat_bridge_safety_gate
+                name: Safety gate
+              - entity: sensor.victron_predbat_bridge_safety_check
+                name: Safety check
+              - entity: sensor.victron_predbat_bridge_predbat_request_freshness
+                name: Predbat request
+              - entity: sensor.victron_predbat_bridge_last_predbat_request
+                name: Last request
+              - entity: sensor.victron_predbat_bridge_source_sensors
+                name: Source sensors
+              - entity: sensor.victron_predbat_bridge_native_ess_state
+                name: Native ESS state
+              - entity: sensor.victron_predbat_bridge_victron_controls
+                name: Victron controls
+          - type: logbook
+            title: Bridge activity · last 6 hours
+            hours_to_show: 6
+            entities:
+              - switch.victron_predbat_bridge_allow_victron_writes
+              - sensor.victron_predbat_bridge_controller_status
+              - sensor.victron_predbat_bridge_write_status
+              - sensor.victron_predbat_bridge_settings_ownership
+              - sensor.victron_predbat_bridge_shadow_intent
+              - sensor.victron_predbat_bridge_safety_gate
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Energy now
+            icon: mdi:transmission-tower
+          - type: gauge
+            entity: sensor.garage_gx_device_dc_battery_charge
+            name: Battery
+            min: 0
+            max: 100
+            needle: true
+            severity:
+              red: 0
+              yellow: 10
+              green: 30
+          - type: tile
+            entity: sensor.garage_gx_device_dc_battery_power
+            name: Battery power
+            color: teal
+          - type: tile
+            entity: sensor.garage_gx_device_pv_power
+            name: DC solar
+            color: amber
+          - type: tile
+            entity: sensor.garage_gx_device_consumption_power_l1
+            name: Victron loads
+            color: orange
+          - type: tile
+            entity: sensor.predbat_site_import_power
+            name: Site import
+            color: blue
+          - type: tile
+            entity: sensor.predbat_site_export_power
+            name: Site export
+            color: purple
+          - type: tile
+            entity: sensor.outside_hypervolt_ev_charger_hypervolt_ev_power
+            name: Hypervolt
+            color: green
+          - type: markdown
+            content: >-
+              Battery power: **positive is charging**, **negative is discharging**.
+              Site readings include the Hypervolt outside the Victron meter.
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: System state
+            icon: mdi:information-outline
+          - type: tile
+            entity: binary_sensor.garage_multiplus_ii_48_5000_70_50_id_276_connected
+            name: Parallel system connected
+            color: green
+          - type: tile
+            entity: sensor.garage_gx_device_system_state
+            name: GX system state
+          - type: tile
+            entity: sensor.garage_gx_device_dc_battery_state
+            name: Battery state
+          - type: tile
+            entity: sensor.garage_gx_device_dc_battery_voltage
+            name: Battery voltage
+          - type: tile
+            entity: sensor.garage_gx_device_dc_battery_current
+            name: Battery current
+          - type: tile
+            entity: select.garage_gx_device_ess_mode
+            name: ESS mode
+          - type: tile
+            entity: select.garage_gx_device_dess_mode
+            name: Dynamic ESS
+          - type: tile
+            entity: select.garage_multiplus_ii_48_5000_70_50_id_276
+            name: Inverter/charger mode
+
+  - title: Trends
+    path: trends
+    icon: mdi:chart-line
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Power · last 24 hours
+            icon: mdi:chart-timeline-variant
+          - type: history-graph
+            title: Site power
+            hours_to_show: 24
+            entities:
+              - entity: sensor.garage_gx_device_pv_power
+                name: DC solar
+              - entity: sensor.garage_gx_device_dc_battery_power
+                name: Battery
+              - entity: sensor.predbat_site_grid_power
+                name: Site grid
+          - type: history-graph
+            title: Planned and actual grid targets
+            hours_to_show: 24
+            entities:
+              - entity: sensor.victron_predbat_bridge_shadow_grid_setpoint
+                name: Planned target
+              - entity: number.garage_gx_device_ac_power_setpoint
+                name: Victron target
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Battery · last 24 hours
+            icon: mdi:battery-clock
+          - type: history-graph
+            title: Battery level
+            hours_to_show: 24
+            entities:
+              - entity: sensor.garage_gx_device_dc_battery_charge
+                name: State of charge
+              - entity: sensor.victron_predbat_bridge_shadow_minimum_soc
+                name: Planned minimum SOC
+          - type: history-graph
+            title: Battery current
+            hours_to_show: 24
+            entities:
+              - entity: sensor.garage_gx_device_dc_battery_current
+                name: Actual current
+              - entity: sensor.victron_predbat_bridge_shadow_maximum_charge_current
+                name: Planned maximum
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Parallel inverter sharing
+            icon: mdi:source-parallel
+          - type: history-graph
+            title: Inverter power · last 24 hours
+            hours_to_show: 24
+            entities:
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_0_inverted_power
+                name: Unit 0
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_3_inverted_power
+                name: Unit 3
+          - type: entities
+            title: Current sharing
+            show_header_toggle: false
+            entities:
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_0_inverted_power
+                name: Unit 0 inverter power
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_3_inverted_power
+                name: Unit 3 inverter power
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_dc_power
+                name: Combined VE.Bus DC power
+
+  - title: Alarms
+    path: alarms
+    icon: mdi:alert-circle-outline
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: VE.Bus alarms
+            icon: mdi:shield-alert
+          - type: entities
+            show_header_toggle: false
+            state_color: true
+            entities:
+              - entity: binary_sensor.garage_multiplus_ii_48_5000_70_50_id_276_connected
+                name: Connected
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_overload_alarm
+                name: Overload
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_high_temperature_alarm
+                name: High temperature
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_high_dc_current_alarm
+                name: High DC current
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_high_dc_voltage_alarm
+                name: High DC voltage
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_low_battery_alarm
+                name: Low battery
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_ripple_alarm
+                name: DC ripple
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_grid_lost_alarm
+                name: Grid lost
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_phase_rotation_alarm
+                name: Phase rotation
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_voltage_sensor_alarm
+                name: Voltage sensor
+              - entity: sensor.garage_multiplus_ii_48_5000_70_50_id_276_temperature_sensor_alarm
+                name: Temperature sensor
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Bridge events · last 24 hours
+            icon: mdi:clipboard-text-clock
+          - type: logbook
+            hours_to_show: 24
+            entities:
+              - switch.victron_predbat_bridge_control
+              - switch.victron_predbat_bridge_allow_victron_writes
+              - sensor.victron_predbat_bridge_controller_status
+              - sensor.victron_predbat_bridge_write_status
+              - sensor.victron_predbat_bridge_settings_ownership
+              - sensor.victron_predbat_bridge_writes_active
+              - sensor.victron_predbat_bridge_writes_armed
+              - sensor.victron_predbat_bridge_shadow_intent
+              - sensor.victron_predbat_bridge_safety_gate
+              - sensor.victron_predbat_bridge_safety_check

@@ -1,0 +1,182 @@
+# Built-in Victron GX migration. Read MIGRATION.md before enabling.
+pred_bat:
+  module: predbat
+  class: PredBat
+  prefix: predbat
+  timezone: Europe/London
+  currency_symbols:
+  - £
+  - p
+  threads: auto
+  template: false
+  num_inverters: 1
+  inverter_type:
+  - VMP2_BRIDGE
+  inverter:
+    name: VMP2_BRIDGE
+    has_rest_api: false
+    has_mqtt_api: false
+    has_service_api: true
+    output_charge_control: power
+    charge_control_immediate: false
+    current_dp: 0
+    charge_discharge_with_rate: false
+    has_charge_enable_time: false
+    has_discharge_enable_time: false
+    has_target_soc: false
+    target_soc_used_for_discharge: true
+    has_reserve_soc: false
+    has_timed_pause: false
+    time_button_press: false
+    support_charge_freeze: true
+    support_discharge_freeze: false
+    has_ge_inverter_mode: false
+    has_fox_inverter_mode: false
+    has_idle_time: false
+    has_time_window: false
+    charge_time_format: S
+    charge_time_entity_is_option: false
+    can_span_midnight: false
+    clock_time_format: '%Y-%m-%d %H:%M:%S'
+    num_load_entities: 1
+    soc_units: '%'
+    write_and_poll_sleep: 2
+  load_today:
+  - sensor.gx_load_energy_today
+  import_today:
+  - sensor.gx_import_energy_today
+  export_today:
+  - sensor.gx_export_energy_today
+  pv_today:
+  - sensor.garage_mppt_450_200_hq2539accfn_yield_today
+  battery_power:
+  - sensor.garage_gx_device_dc_battery_power
+  battery_power_invert:
+  - true
+  pv_power:
+  - sensor.garage_gx_device_pv_power
+  load_power:
+  - sensor.garage_gx_device_consumption_power_l1
+  grid_power:
+  - sensor.garage_gx_device_grid_power_l1
+  grid_power_invert:
+  - false
+  soc_percent:
+  - sensor.garage_gx_device_dc_battery_charge
+  soc_max:
+  - 19.2
+  battery_min_soc:
+  - input_number.vp_min_soc
+  battery_temperature:
+  - sensor.garage_pylontech_battery_id_512_temperature
+  battery_voltage:
+  - sensor.garage_gx_device_dc_battery_voltage
+  battery_scaling:
+  - 1
+  inverter_limit:
+  - 7400
+  inverter_limit_charge:
+  - 7000
+  inverter_limit_discharge:
+  - 7000
+  inverter_limit_export:
+  - 7000
+  inverter_limit_charge_dc:
+  - 7000
+  battery_rate_max:
+  - 7000
+  export_limit:
+  - 7400
+  charge_rate:
+  - input_number.vp_charge_rate
+  discharge_rate:
+  - input_number.vp_discharge_rate
+  metric_octopus_import: sensor.octopus_energy_electricity_20l3847232_2199999016257_current_rate
+  rates_export:
+  - rate: 12
+  metric_standing_charge: re:(sensor.(octopus_energy_|)electricity_[0-9a-z]+_[0-9a-z]+_current_standing_charge)
+  pv_forecast_today: sensor.solcast_pv_forecast_forecast_today
+  pv_forecast_tomorrow: sensor.solcast_pv_forecast_forecast_tomorrow
+  pv_forecast_d3: sensor.solcast_pv_forecast_forecast_day_3
+  pv_forecast_d4: sensor.solcast_pv_forecast_forecast_day_4
+  days_previous:
+  - 7
+  - 14
+  - 21
+  days_previous_weight:
+  - 1
+  - 1
+  - 1
+  forecast_hours: 48
+  load_filter_threshold: 30
+  num_cars: 0
+  car_energy_reported_load: false
+  car_charging_hold: false
+  car_charging_from_battery: true
+  inverter_hybrid: true
+  set_export_freeze: false
+  set_freeze_export_during_demand: false
+  set_charge_low_power: false
+  set_export_low_power: false
+  set_reserve_enable: false
+  set_reserve_min: 10
+  watch_list:
+  - +[battery_min_soc]
+  charge_start_service:
+  - service: script.vp_predbat_request
+    always: true
+    direction: charge
+    request: charge
+    target_soc: '{target_soc}'
+    power: '{power}'
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: charge
+    request: charge
+    target_soc: '{target_soc}'
+    power: '{power}'
+  charge_stop_service:
+  - service: script.vp_predbat_request
+    always: true
+    direction: charge
+    request: 'off'
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: charge
+    request: 'off'
+  charge_freeze_service:
+  - service: script.vp_predbat_request
+    always: true
+    direction: charge
+    request: preserve
+    target_soc: '{target_soc}'
+    power: '{power}'
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: charge
+    request: preserve
+    target_soc: '{target_soc}'
+    power: '{power}'
+  discharge_start_service:
+  - service: script.vp_predbat_request
+    always: true
+    direction: export
+    request: export
+    target_soc: '{target_soc}'
+    power: '{power}'
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: export
+    request: export
+    target_soc: '{target_soc}'
+    power: '{power}'
+  discharge_stop_service:
+  - service: script.vp_predbat_request
+    always: true
+    direction: export
+    request: 'off'
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: export
+    request: 'off'
+  octopus_intelligent_charging: false

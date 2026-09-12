@@ -1,0 +1,38 @@
+# Merge these keys into your existing pred_bat: app in apps.yaml.
+# Do not add a second pred_bat: heading.
+pred_bat:
+  charge_start_service:
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: charge
+    request: charge
+    target_soc: '{target_soc}'
+    power: '{power}'
+
+  charge_stop_service:
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: charge
+    request: 'off'
+
+  charge_freeze_service:
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: charge
+    request: preserve
+    target_soc: '{target_soc}'
+    power: '{power}'
+
+  discharge_start_service:
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: export
+    request: export
+    target_soc: '{target_soc}'
+    power: '{power}'
+
+  discharge_stop_service:
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: export
+    request: 'off'

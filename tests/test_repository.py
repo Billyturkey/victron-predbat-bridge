@@ -28,6 +28,7 @@ class RepositoryTests(unittest.TestCase):
     def test_setup_guide_and_dashboard_are_shipped(self):
         self.assertTrue((ROOT / "SETUP.md").is_file())
         self.assertTrue((ROOT / "examples/dashboard-billyturkey.yaml").is_file())
+        self.assertTrue((ROOT / "examples/predbat-apps.yaml").is_file())
 
 
 if __name__ == "__main__":

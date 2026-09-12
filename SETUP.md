@@ -89,24 +89,82 @@ Leave the risk acknowledgement off during initial checks.
 ## Connect Predbat
 
 Predbat must call `victron_predbat_bridge.request` whenever its requested mode
-or target is refreshed. A charge request looks like this:
+or target is refreshed. Edit the `apps.yaml` file used by the Predbat AppDaemon
+add-on. Find the existing `pred_bat:` section and add or replace these five
+service blocks inside it:
 
 ```yaml
-service: victron_predbat_bridge.request
-data:
-  direction: charge
-  request: charge
-  target_soc: 80
-  power: 3000
+pred_bat:
+  # Keep your existing Predbat settings above and below these blocks.
+  charge_start_service:
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: charge
+    request: charge
+    target_soc: '{target_soc}'
+    power: '{power}'
+
+  charge_stop_service:
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: charge
+    request: 'off'
+
+  charge_freeze_service:
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: charge
+    request: preserve
+    target_soc: '{target_soc}'
+    power: '{power}'
+
+  discharge_start_service:
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: export
+    request: export
+    target_soc: '{target_soc}'
+    power: '{power}'
+
+  discharge_stop_service:
+  - service: victron_predbat_bridge.request
+    always: true
+    direction: export
+    request: 'off'
 ```
 
-An export request uses `direction: export`, `request: export`, the export stop
-SOC in `target_soc`, and the requested export power. Send `request: "off"` for
-the corresponding direction when the request ends.
+The complete copy-and-paste example is in
+[`examples/predbat-apps.yaml`](examples/predbat-apps.yaml). The `pred_bat:` line
+already exists in a normal Predbat configuration. Merge the five service keys
+under that existing line; do not create a second `pred_bat:` app.
+
+If any of those keys already call an older script or controller, remove that
+old service entry. Each event should call the bridge once. Other unrelated
+service entries may remain if you deliberately need them.
+
+`charge_start_service` sends the requested charge target and power.
+`charge_freeze_service` asks the bridge to preserve the battery. The two stop
+services clear their respective requests. `discharge_start_service` maps
+Predbat discharge/export control to the bridge's export request.
+
+Save `apps.yaml`, then restart the Predbat AppDaemon add-on or reload its apps.
+Check the Predbat log for YAML or service errors. Within the request timeout,
+the bridge's **Last Predbat request** should update and **Predbat request
+freshness** should become `valid`.
 
 The service call should be repeated before the configured request timeout. If
 requests stop, the freshness gate becomes invalid and active control restores
 the captured settings.
+
+To test the Home Assistant service independently of Predbat, open **Developer
+tools > Actions** and call `victron_predbat_bridge.request` with:
+
+```yaml
+direction: charge
+request: charge
+target_soc: 80
+power: 3000
+```
 
 ## Shadow test
 
@@ -144,4 +202,3 @@ Create a new Home Assistant dashboard, open its raw configuration editor and
 paste the contents of `examples/dashboard-billyturkey.yaml`. That example uses
 the entity IDs from the original two-MultiPlus installation. Replace any entity
 ID that differs on another installation.
-

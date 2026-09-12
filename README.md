@@ -6,6 +6,9 @@ Victron ESS through the official Victron GX integration.
 For installation, entity selection, Predbat service calls and first-write
 testing, see the **[setup guide](SETUP.md)**.
 
+A bridge-only `apps.yaml` callback example is available in
+**[examples/predbat-apps.yaml](examples/predbat-apps.yaml)**.
+
 > [!CAUTION]
 > **USE ENTIRELY AT YOUR OWN RISK.**
 >

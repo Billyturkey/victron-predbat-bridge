@@ -187,9 +187,66 @@ class VictronPredbatBridgeOptionsFlow(config_entries.OptionsFlow):
                     data_schema=self._schema(user_input),
                     errors={"base": "invalid_voltage_range"},
                 )
-            return self.async_create_entry(title="", data=user_input)
+            runtime = self.hass.data.get(DOMAIN, {}).get(
+                self._config_entry.entry_id
+            )
+            if runtime is not None:
+                if runtime.owned:
+                    from .writer import async_restore_baseline
 
-        current = DEFAULT_OPTIONS | dict(self._config_entry.options)
+                    if not await async_restore_baseline(
+                        self.hass,
+                        self._config_entry,
+                        "configuration changed",
+                        disarm=True,
+                    ):
+                        return self.async_show_form(
+                            step_id="init",
+                            data_schema=self._schema(user_input),
+                            errors={"base": "configuration_restore_failed"},
+                        )
+                else:
+                    runtime.armed = False
+                    runtime.writes_enabled = False
+                    await runtime.store.async_save(
+                        {
+                            "owned": False,
+                            "armed": False,
+                            "baseline": runtime.baseline,
+                        }
+                    )
+            entity_keys = {
+                CONF_BATTERY_SOC,
+                CONF_BATTERY_POWER,
+                CONF_BATTERY_VOLTAGE,
+                CONF_GRID_POWER,
+                CONF_LOAD_POWER,
+                CONF_PV_POWER,
+                CONF_EV_POWER,
+                CONF_AC_SETPOINT,
+                CONF_MAX_CHARGE_CURRENT,
+                CONF_MAX_INVERTER_POWER,
+                CONF_MIN_SOC,
+            }
+            updated_data = dict(self._config_entry.data)
+            for key in entity_keys:
+                if key in user_input and user_input[key]:
+                    updated_data[key] = user_input[key]
+                else:
+                    updated_data.pop(key, None)
+            options = {
+                key: value for key, value in user_input.items() if key not in entity_keys
+            }
+            self.hass.config_entries.async_update_entry(
+                self._config_entry, data=updated_data
+            )
+            return self.async_create_entry(title="", data=options)
+
+        current = (
+            DEFAULT_OPTIONS
+            | dict(self._config_entry.options)
+            | dict(self._config_entry.data)
+        )
         return self.async_show_form(step_id="init", data_schema=self._schema(current))
 
     @staticmethod
@@ -200,7 +257,33 @@ class VictronPredbatBridgeOptionsFlow(config_entries.OptionsFlow):
                 min=minimum, max=maximum, step=step, mode="box", unit_of_measurement=unit
             )
         )
-        fields = {
+        fields = dict(
+            [
+                required_entity(CONF_BATTERY_SOC, "sensor", values),
+                required_entity(CONF_BATTERY_POWER, "sensor", values),
+                required_entity(CONF_BATTERY_VOLTAGE, "sensor", values),
+                required_entity(CONF_GRID_POWER, "sensor", values),
+                required_entity(CONF_LOAD_POWER, "sensor", values),
+                required_entity(CONF_PV_POWER, "sensor", values),
+            ]
+        )
+        ev_marker = (
+            vol.Optional(CONF_EV_POWER, default=values[CONF_EV_POWER])
+            if values.get(CONF_EV_POWER)
+            else vol.Optional(CONF_EV_POWER)
+        )
+        fields[ev_marker] = entity("sensor")
+        fields.update(
+            dict(
+                [
+                    required_entity(CONF_AC_SETPOINT, "number", values),
+                    required_entity(CONF_MAX_CHARGE_CURRENT, "number", values),
+                    required_entity(CONF_MAX_INVERTER_POWER, "number", values),
+                    required_entity(CONF_MIN_SOC, "number", values),
+                ]
+            )
+        )
+        fields.update({
                 vol.Required(OPT_MAX_CHARGE_POWER, default=values[OPT_MAX_CHARGE_POWER]): number(0, 100000, 50, "W"),
                 vol.Required(OPT_MAX_EXPORT_POWER, default=values[OPT_MAX_EXPORT_POWER]): number(0, 100000, 50, "W"),
                 vol.Required(OPT_CHARGE_CURRENT_LIMIT, default=values[OPT_CHARGE_CURRENT_LIMIT]): number(0, 2000, 1, "A"),
@@ -224,7 +307,7 @@ class VictronPredbatBridgeOptionsFlow(config_entries.OptionsFlow):
                 vol.Required(OPT_VERIFY_CURRENT_ALLOWANCE, default=values[OPT_VERIFY_CURRENT_ALLOWANCE]): number(0, 100, 1, "A"),
                 vol.Required(OPT_VERIFY_INVERTER_ALLOWANCE, default=values[OPT_VERIFY_INVERTER_ALLOWANCE]): number(0, 5000, 10, "W"),
                 vol.Required(OPT_VERIFY_SOC_ALLOWANCE, default=values[OPT_VERIFY_SOC_ALLOWANCE]): number(0, 20, 0.1, "%"),
-            }
+            })
         optional_entities = {
             OPT_CONNECTED_ENTITY: "binary_sensor",
             OPT_ESS_MODE_ENTITY: "select",

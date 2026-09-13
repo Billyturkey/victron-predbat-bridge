@@ -29,7 +29,11 @@ A bridge-only `apps.yaml` callback example is available in
 
 ## Current experimental build
 
-Version 0.6.0 adds an experimental guarded-write mode. It remains locked unless
+Version 0.6.1 adds editable source and Victron control entity selections to the
+**Configure** screen, so an installation can change entities without removing
+and adding the integration again.
+
+The experimental guarded-write mode remains locked unless
 the risk acknowledgement is enabled under **Configure**, the bridge **Control**
 switch is on, every safety check passes, and **Allow Victron writes** is manually
 turned on. The write switch preserves the user's armed choice across a restart,

@@ -19,6 +19,10 @@ class RepositoryTests(unittest.TestCase):
         self.assertEqual(manifest["name"], "Victron Predbat Bridge")
         self.assertTrue(manifest["config_flow"])
         self.assertTrue(manifest["version"])
+        const_text = (
+            ROOT / "custom_components/victron_predbat_bridge/const.py"
+        ).read_text()
+        self.assertIn(f'VERSION = "{manifest["version"]}"', const_text)
 
     def test_hacs_metadata_identifies_an_integration(self):
         hacs = json.loads((ROOT / "hacs.json").read_text())

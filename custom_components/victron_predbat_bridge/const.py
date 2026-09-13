@@ -3,7 +3,7 @@
 from homeassistant.const import Platform
 
 DOMAIN = "victron_predbat_bridge"
-VERSION = "0.6.0"
+VERSION = "0.6.1"
 
 PLATFORMS = [Platform.SENSOR, Platform.SWITCH]
 

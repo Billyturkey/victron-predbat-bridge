@@ -86,6 +86,12 @@ if that integration reports a coarser value than its advertised step.
 
 Leave the risk acknowledgement off during initial checks.
 
+The same **Configure** form can be used later to change any source sensor,
+Victron number control, optional EV sensor, limit or safety entity. Saving the
+form safely disarms writes, restores any settings currently owned by the bridge,
+then reloads the integration with the new selections. **Allow Victron writes**
+must be deliberately enabled again after any configuration change.
+
 ## Connect Predbat
 
 Predbat must call `victron_predbat_bridge.request` whenever its requested mode

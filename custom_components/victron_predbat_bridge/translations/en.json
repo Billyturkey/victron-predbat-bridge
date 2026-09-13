@@ -30,6 +30,17 @@
         "title": "System limits",
         "description": "DANGER — USE ENTIRELY AT YOUR OWN RISK. This integration can write to battery and inverter controls. Wrong entities or limits can damage equipment, interrupt power, or breach grid limits. Confirm every entity and electrical limit with a qualified installer. Verification allowances are added to each selected number entity's advertised step; leave them at zero unless its feedback requires more. Risk acknowledgement only unlocks the separate Allow Victron writes switch.",
         "data": {
+          "battery_soc": "Battery SOC sensor",
+          "battery_power": "Battery power sensor",
+          "battery_voltage": "Battery voltage sensor",
+          "grid_power": "Victron grid power sensor",
+          "load_power": "Victron load power sensor",
+          "pv_power": "DC PV power sensor",
+          "ev_power": "External EV power sensor (optional)",
+          "ac_setpoint": "GX AC power setpoint",
+          "max_charge_current": "Maximum charge current control",
+          "max_inverter_power": "Maximum inverter power control",
+          "min_soc": "Minimum SOC control",
           "max_charge_power": "Maximum battery charge power",
           "max_export_power": "Maximum battery discharge/export power",
           "charge_current_limit": "Maximum battery charge current",
@@ -65,7 +76,8 @@
       }
     },
     "error": {
-      "invalid_voltage_range": "Maximum battery voltage must be greater than minimum battery voltage."
+      "invalid_voltage_range": "Maximum battery voltage must be greater than minimum battery voltage.",
+      "configuration_restore_failed": "The existing Victron settings could not be restored. Entity changes were not saved; resolve the recovery warning first."
     }
   }
 }

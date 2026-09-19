@@ -80,10 +80,6 @@ entities:
 - inverter/charger mode;
 - native charge schedules 0 through 4.
 
-Leave all four verification allowances at zero initially. The bridge
-automatically uses each number entity's advertised step. Add an allowance only
-if that integration reports a coarser value than its advertised step.
-
 Leave the risk acknowledgement off during initial checks.
 
 The same **Configure** form can be used later to change any source sensor,
@@ -193,7 +189,7 @@ reported by Victron.
 4. Wait for a fresh Predbat request and confirm **Safety gate** is valid.
 5. Start during an ordinary demand period and turn **Allow Victron writes** on.
 6. Confirm **Settings ownership** becomes `owned` and **Write status** reports
-   that all settings were confirmed.
+   `Guarded writes active — commands sent`.
 7. Turn **Allow Victron writes** off.
 8. Confirm ownership becomes `released`, writes become locked, and the four
    original Victron settings are restored.

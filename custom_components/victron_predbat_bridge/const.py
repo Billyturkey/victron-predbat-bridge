@@ -3,7 +3,7 @@
 from homeassistant.const import Platform
 
 DOMAIN = "victron_predbat_bridge"
-VERSION = "0.6.1"
+VERSION = "0.7.0"
 
 PLATFORMS = [Platform.SENSOR, Platform.SWITCH]
 
@@ -36,10 +36,6 @@ OPT_GRID_POSITIVE_IMPORT = "grid_positive_import"
 OPT_PHASE_COUNT = "phase_count"
 OPT_REQUEST_TIMEOUT = "request_timeout"
 OPT_WRITES_ACKNOWLEDGED = "writes_acknowledged"
-OPT_VERIFY_GRID_ALLOWANCE = "verify_grid_allowance"
-OPT_VERIFY_CURRENT_ALLOWANCE = "verify_current_allowance"
-OPT_VERIFY_INVERTER_ALLOWANCE = "verify_inverter_allowance"
-OPT_VERIFY_SOC_ALLOWANCE = "verify_soc_allowance"
 OPT_CONNECTED_ENTITY = "connected_entity"
 OPT_ESS_MODE_ENTITY = "ess_mode_entity"
 OPT_HUB4_MODE_ENTITY = "hub4_mode_entity"
@@ -69,10 +65,6 @@ DEFAULT_OPTIONS = {
     OPT_PHASE_COUNT: "1",
     OPT_REQUEST_TIMEOUT: 720.0,
     OPT_WRITES_ACKNOWLEDGED: False,
-    OPT_VERIFY_GRID_ALLOWANCE: 0.0,
-    OPT_VERIFY_CURRENT_ALLOWANCE: 0.0,
-    OPT_VERIFY_INVERTER_ALLOWANCE: 0.0,
-    OPT_VERIFY_SOC_ALLOWANCE: 0.0,
 }
 
 SIGNAL_UPDATE = f"{DOMAIN}_update"

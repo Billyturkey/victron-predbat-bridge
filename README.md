@@ -29,9 +29,10 @@ A bridge-only `apps.yaml` callback example is available in
 
 ## Current experimental build
 
-Version 0.6.1 adds editable source and Victron control entity selections to the
-**Configure** screen, so an installation can change entities without removing
-and adding the integration again.
+Version 0.7.0 removes readback-value enforcement. Victron integrations and
+firmware may round or cap requested values, so a different reported value no
+longer switches guarded writes off. The bridge sends each command once and
+continues when Home Assistant accepts the service call.
 
 The experimental guarded-write mode remains locked unless
 the risk acknowledgement is enabled under **Configure**, the bridge **Control**
@@ -43,9 +44,9 @@ check passes. A deliberate switch-off remains off.
 Before the first write, the bridge captures the selected grid setpoint, charge
 current limit, inverter limit and minimum SOC. It refuses to capture a grid
 setpoint outside ±200 W, which helps prevent taking ownership while another
-controller is active. Every command is read back after writing. A failed write,
-stale Predbat request, failed safety check, disabled switch, reload or clean
-restart restores the captured settings. Recovery data is stored so an unclean
+controller is active. A failed Home Assistant service call, stale Predbat
+request, failed safety check, disabled switch, reload or clean restart restores
+the captured settings. Recovery data is stored so an unclean
 restart can restore it when the integration next starts. After recovery, an
 armed bridge waits for fresh safe instructions before taking control again.
 If Victron entities are not ready during startup, pending recovery is retried
@@ -55,13 +56,10 @@ The device page keeps controller state and shadow commands together under
 Sensors. Detailed source, request and native ESS checks appear under the
 Diagnostics section so the normal operating view remains easier to scan.
 
-Write verification uses each selected number entity's advertised step rather
-than installation-specific hard-coded tolerances. It checks feedback against
-both the command sent and the latest shadow calculation. If neither matches, it
-retries once with the latest command before restoring and disarming. Optional
-additional allowances can be configured for integrations whose reported values
-need them; zero means use the entity resolution only. Failure messages include
-the original request, latest target and reported value.
+The bridge does not compare the requested number with the value later reported
+by Victron. Device-side rounding, clamping and delayed feedback therefore do
+not cause false failures or disarm the write switch. The dashboard can still
+show planned and reported values for observation during testing.
 
 Number services use Home Assistant's explicit entity target field. The write
 gate remains closed after a failure, including for state-change callbacks that
@@ -181,7 +179,7 @@ restored the normal grid setpoint. Open **Configure**, read the warning, enable
 the risk acknowledgement, and save. Wait for a fresh Predbat request and confirm
 all safety sensors are valid. Turn **Allow Victron writes** on first during a
 normal demand period. Check **Write status** reports that all four settings were
-confirmed. Turn it off and verify **Settings ownership** is `released` and the
+sent. Turn it off and verify **Settings ownership** is `released` and the
 original four settings have been restored before testing charge or export.
 
 Restart Home Assistant and confirm that the Control switch keeps its previous

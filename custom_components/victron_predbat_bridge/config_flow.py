@@ -42,10 +42,6 @@ from .const import (
     OPT_RESERVE_FLOOR,
     OPT_REQUEST_TIMEOUT,
     OPT_WRITES_ACKNOWLEDGED,
-    OPT_VERIFY_CURRENT_ALLOWANCE,
-    OPT_VERIFY_GRID_ALLOWANCE,
-    OPT_VERIFY_INVERTER_ALLOWANCE,
-    OPT_VERIFY_SOC_ALLOWANCE,
     OPT_SCHEDULE_0_ENTITY,
     OPT_SCHEDULE_1_ENTITY,
     OPT_SCHEDULE_2_ENTITY,
@@ -303,10 +299,6 @@ class VictronPredbatBridgeOptionsFlow(config_entries.OptionsFlow):
                 vol.Required(OPT_GRID_POSITIVE_IMPORT, default=values[OPT_GRID_POSITIVE_IMPORT]): selector.BooleanSelector(),
                 vol.Required(OPT_REQUEST_TIMEOUT, default=values[OPT_REQUEST_TIMEOUT]): number(60, 3600, 30, "s"),
                 vol.Required(OPT_WRITES_ACKNOWLEDGED, default=values[OPT_WRITES_ACKNOWLEDGED]): selector.BooleanSelector(),
-                vol.Required(OPT_VERIFY_GRID_ALLOWANCE, default=values[OPT_VERIFY_GRID_ALLOWANCE]): number(0, 5000, 10, "W"),
-                vol.Required(OPT_VERIFY_CURRENT_ALLOWANCE, default=values[OPT_VERIFY_CURRENT_ALLOWANCE]): number(0, 100, 1, "A"),
-                vol.Required(OPT_VERIFY_INVERTER_ALLOWANCE, default=values[OPT_VERIFY_INVERTER_ALLOWANCE]): number(0, 5000, 10, "W"),
-                vol.Required(OPT_VERIFY_SOC_ALLOWANCE, default=values[OPT_VERIFY_SOC_ALLOWANCE]): number(0, 20, 0.1, "%"),
             })
         optional_entities = {
             OPT_CONNECTED_ENTITY: "binary_sensor",

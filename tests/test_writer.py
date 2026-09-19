@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import types
 import unittest
 
@@ -13,50 +12,27 @@ const, _controller, writer = load_bridge_modules()
 
 
 class WriterTests(unittest.IsolatedAsyncioTestCase):
-    async def test_entity_step_is_used_as_allowance(self):
-        hass = Hass({"number.target": State(99, {"step": 1})})
-        confirmed, reported, latest = await writer._write_and_verify(
-            hass, "number.target", 100, 0
-        )
-        self.assertTrue(confirmed)
-        self.assertEqual(reported, 99)
-        self.assertEqual(latest, 100)
-        self.assertEqual(hass.services.calls, [])
-
-    async def test_configured_allowance_can_exceed_entity_step(self):
-        hass = Hass({"number.target": State(98, {"step": 1})})
-        confirmed, *_ = await writer._write_and_verify(
-            hass, "number.target", 100, 2
-        )
-        self.assertTrue(confirmed)
-        self.assertEqual(hass.services.calls, [])
-
     async def test_write_uses_explicit_entity_target(self):
-        hass = Hass({"number.target": State(50, {"step": 1})})
-        confirmed, reported, _ = await writer._write_and_verify(
-            hass, "number.target", 100, 0
-        )
-        self.assertTrue(confirmed)
-        self.assertEqual(reported, 100)
+        hass = Hass({"number.target": State(50)})
+        sent = await writer._write_value(hass, "number.target", 100)
+        self.assertTrue(sent)
         self.assertEqual(hass.services.calls[0][4], {"entity_id": "number.target"})
 
-    async def test_failed_readback_is_rejected_after_retry(self):
-        hass = Hass({"number.target": State(50, {"step": 1})}, update=False)
-        original_sleep = asyncio.sleep
+    async def test_different_reported_value_does_not_fail_or_retry(self):
+        hass = Hass({"number.target": State(6999)}, update=False)
+        sent = await writer._write_value(hass, "number.target", 7399)
+        self.assertTrue(sent)
+        self.assertEqual(hass.states.get("number.target").state, "6999")
+        self.assertEqual(len(hass.services.calls), 1)
 
-        async def no_sleep(_delay):
-            return None
+    async def test_service_error_is_rejected(self):
+        hass = Hass({"number.target": State(50)})
 
-        asyncio.sleep = no_sleep
-        try:
-            confirmed, reported, _ = await writer._write_and_verify(
-                hass, "number.target", 100, 0
-            )
-        finally:
-            asyncio.sleep = original_sleep
-        self.assertFalse(confirmed)
-        self.assertEqual(reported, 50)
-        self.assertEqual(len(hass.services.calls), 2)
+        async def fail(*args, **kwargs):
+            raise writer.HomeAssistantError("service failed")
+
+        hass.services.async_call = fail
+        self.assertFalse(await writer._write_value(hass, "number.target", 100))
 
     async def test_baseline_capture_rejects_active_controller(self):
         data = {
@@ -79,4 +55,3 @@ class WriterTests(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -1,9 +1,6 @@
-"""Guarded and verified Victron number writes."""
+"""Guarded Victron number writes."""
 
 from __future__ import annotations
-
-import asyncio
-from collections.abc import Callable
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -15,21 +12,16 @@ from .const import (
     CONF_MAX_CHARGE_CURRENT,
     CONF_MAX_INVERTER_POWER,
     CONF_MIN_SOC,
-    DEFAULT_OPTIONS,
     DOMAIN,
-    OPT_VERIFY_CURRENT_ALLOWANCE,
-    OPT_VERIFY_GRID_ALLOWANCE,
-    OPT_VERIFY_INVERTER_ALLOWANCE,
-    OPT_VERIFY_SOC_ALLOWANCE,
     OPT_WRITES_ACKNOWLEDGED,
     SIGNAL_UPDATE,
 )
 
 WRITE_ORDER = (
-    (CONF_MIN_SOC, "minimum_soc", OPT_VERIFY_SOC_ALLOWANCE),
-    (CONF_MAX_CHARGE_CURRENT, "charge_current", OPT_VERIFY_CURRENT_ALLOWANCE),
-    (CONF_MAX_INVERTER_POWER, "inverter_limit", OPT_VERIFY_INVERTER_ALLOWANCE),
-    (CONF_AC_SETPOINT, "grid_setpoint", OPT_VERIFY_GRID_ALLOWANCE),
+    (CONF_MIN_SOC, "minimum_soc"),
+    (CONF_MAX_CHARGE_CURRENT, "charge_current"),
+    (CONF_MAX_INVERTER_POWER, "inverter_limit"),
+    (CONF_AC_SETPOINT, "grid_setpoint"),
 )
 RESTORE_ORDER = (CONF_AC_SETPOINT, CONF_MAX_CHARGE_CURRENT, CONF_MAX_INVERTER_POWER, CONF_MIN_SOC)
 
@@ -44,52 +36,19 @@ def _numeric_state(hass: HomeAssistant, entity_id: str) -> float | None:
         return None
 
 
-async def _write_and_verify(
-    hass: HomeAssistant,
-    entity_id: str,
-    value: float,
-    configured_allowance: float,
-    latest_value: Callable[[], float] | None = None,
-) -> tuple[bool, float | None, float]:
-    """Write, follow a moving target, retry once, and verify entity feedback."""
-    state = hass.states.get(entity_id)
+async def _write_value(hass: HomeAssistant, entity_id: str, value: float) -> bool:
+    """Send one number command and accept device-side rounding or limiting."""
     try:
-        entity_step = abs(float(state.attributes.get("step", 0))) if state else 0.0
-    except (TypeError, ValueError):
-        entity_step = 0.0
-    allowance = max(float(configured_allowance), entity_step)
-    desired = value
-    reported = _numeric_state(hass, entity_id)
-
-    for attempt in range(2):
-        latest = float(latest_value()) if latest_value is not None else desired
-        if reported is None:
-            return False, None, latest
-        if min(abs(reported - desired), abs(reported - latest)) <= allowance:
-            return True, reported, latest
-        # The second attempt follows the newest calculation rather than
-        # replaying a target made stale by changing load or battery voltage.
-        if attempt:
-            desired = latest
-        try:
-            await hass.services.async_call(
-                "number",
-                "set_value",
-                {"value": desired},
-                blocking=True,
-                target={"entity_id": entity_id},
-            )
-        except HomeAssistantError:
-            return False, _numeric_state(hass, entity_id), latest
-        for _ in range(40):
-            await asyncio.sleep(0.25)
-            reported = _numeric_state(hass, entity_id)
-            latest = float(latest_value()) if latest_value is not None else desired
-            if reported is not None and min(
-                abs(reported - desired), abs(reported - latest)
-            ) <= allowance:
-                return True, reported, latest
-    return False, reported, latest
+        await hass.services.async_call(
+            "number",
+            "set_value",
+            {"value": value},
+            blocking=True,
+            target={"entity_id": entity_id},
+        )
+    except HomeAssistantError:
+        return False
+    return True
 
 
 async def async_capture_baseline(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -134,20 +93,16 @@ async def async_restore_baseline(
     async with runtime.write_lock:
         for key in RESTORE_ORDER:
             value = runtime.baseline.get(key)
-            confirmed, reported, _latest = (
-                (False, None, float(value or 0.0))
-                if value is None
-                else await _write_and_verify(
-                    hass, entry.data[key], float(value), 0.0
-                )
+            sent = value is not None and await _write_value(
+                hass, entry.data[key], float(value)
             )
-            if not confirmed:
+            if not sent:
                 runtime.writes_enabled = False
                 if disarm:
                     runtime.armed = False
                 runtime.write_status = (
-                    f"RECOVERY REQUIRED — {entry.data[key]} requested "
-                    f"{value}, reported {reported}"
+                    f"RECOVERY REQUIRED — service call failed for "
+                    f"{entry.data[key]} while restoring {value}"
                 )
                 await runtime.store.async_save(
                     {
@@ -228,24 +183,14 @@ async def async_apply_shadow(hass: HomeAssistant, entry: ConfigEntry) -> None:
             runtime.write_status = "Safety changed — restoring original settings"
             async_dispatcher_send(hass, SIGNAL_UPDATE)
         else:
-            settings = DEFAULT_OPTIONS | dict(entry.options)
-            for key, attribute, allowance_key in WRITE_ORDER:
+            for key, attribute in WRITE_ORDER:
                 value = float(getattr(runtime.shadow, attribute))
-                confirmed, reported, latest = await _write_and_verify(
-                    hass,
-                    entry.data[key],
-                    value,
-                    float(settings[allowance_key]),
-                    lambda attribute=attribute: float(
-                        getattr(runtime.shadow, attribute)
-                    ),
-                )
-                if not confirmed:
+                if not await _write_value(hass, entry.data[key], value):
                     runtime.writes_enabled = False
                     runtime.armed = False
                     runtime.write_status = (
-                        f"Write failed — {entry.data[key]} requested "
-                        f"{value}, latest {latest}, reported {reported}; restoring"
+                        f"Write service failed — {entry.data[key]} requested "
+                        f"{value}; restoring"
                     )
                     await runtime.store.async_save(
                         {
@@ -255,15 +200,15 @@ async def async_apply_shadow(hass: HomeAssistant, entry: ConfigEntry) -> None:
                         }
                     )
                     async_dispatcher_send(hass, SIGNAL_UPDATE)
-                    restore_reason = "write/readback failure"
+                    restore_reason = "write service failure"
                     break
             else:
-                runtime.write_status = "Guarded writes active — all settings confirmed"
+                runtime.write_status = "Guarded writes active — commands sent"
                 async_dispatcher_send(hass, SIGNAL_UPDATE)
                 return
     await async_restore_baseline(
         hass,
         entry,
         restore_reason,
-        disarm=restore_reason == "write/readback failure",
+        disarm=restore_reason == "write service failure",
     )

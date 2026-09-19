@@ -28,7 +28,7 @@
     "step": {
       "init": {
         "title": "System limits",
-        "description": "DANGER — USE ENTIRELY AT YOUR OWN RISK. This integration can write to battery and inverter controls. Wrong entities or limits can damage equipment, interrupt power, or breach grid limits. Confirm every entity and electrical limit with a qualified installer. Verification allowances are added to each selected number entity's advertised step; leave them at zero unless its feedback requires more. Risk acknowledgement only unlocks the separate Allow Victron writes switch.",
+        "description": "DANGER — USE ENTIRELY AT YOUR OWN RISK. This integration can write to battery and inverter controls. Wrong entities or limits can damage equipment, interrupt power, or breach grid limits. Confirm every entity and electrical limit with a qualified installer. Victron may round or limit requested values; accepted service calls are not rejected because the reported value differs. Risk acknowledgement only unlocks the separate Allow Victron writes switch.",
         "data": {
           "battery_soc": "Battery SOC sensor",
           "battery_power": "Battery power sensor",
@@ -58,10 +58,6 @@
           "grid_positive_import": "Grid power is positive while importing",
           "request_timeout": "Predbat request timeout",
           "writes_acknowledged": "I accept full responsibility and understand that enabling Allow Victron writes can control real electrical equipment",
-          "verify_grid_allowance": "Additional grid-setpoint verification allowance",
-          "verify_current_allowance": "Additional charge-current verification allowance",
-          "verify_inverter_allowance": "Additional inverter-limit verification allowance",
-          "verify_soc_allowance": "Additional minimum-SOC verification allowance",
           "connected_entity": "Parallel inverter system connected",
           "ess_mode_entity": "ESS BatteryLife mode",
           "hub4_mode_entity": "ESS Hub4 mode",

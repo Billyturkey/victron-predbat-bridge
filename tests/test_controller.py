@@ -110,6 +110,31 @@ class ControllerTests(unittest.TestCase):
         self.assertFalse(result.safety_ready)
         self.assertIn("Dynamic ESS", result.safety_note)
 
+    def test_preserve_reserve_does_not_ratchet(self):
+        """A raised GX minimum SOC must not become the next cycle's reserve."""
+        hass, config, options, runtime = setup_case()
+        runtime.baseline = {const.CONF_MIN_SOC: 20.0}
+        hass.states.values["sensor.soc"].state = "93"
+        runtime.charge_request = "preserve"
+        held = controller.calculate_shadow(hass, config, options, runtime)
+        self.assertEqual(held.intent, "preserve")
+        self.assertEqual(held.minimum_soc, 95)
+
+        # Simulate the bridge having written 95 to the GX, then a normal slot.
+        hass.states.values["number.min_soc"].state = str(held.minimum_soc)
+        runtime.charge_request = "off"
+        normal = controller.calculate_shadow(hass, config, options, runtime)
+        self.assertEqual(normal.intent, "demand")
+        self.assertEqual(normal.minimum_soc, 20)
+
+    def test_reserve_uses_floor_before_baseline_captured(self):
+        hass, config, options, runtime = setup_case()
+        hass.states.values["number.min_soc"].state = "95"
+        options[const.OPT_RESERVE_FLOOR] = 15.0
+        result = controller.calculate_shadow(hass, config, options, runtime)
+        self.assertEqual(result.intent, "demand")
+        self.assertEqual(result.minimum_soc, 15)
+
 
 if __name__ == "__main__":
     unittest.main()

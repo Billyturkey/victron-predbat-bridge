@@ -152,8 +152,13 @@ def calculate_shadow(hass: HomeAssistant, config: dict, options: dict, runtime) 
     volts = _number(hass, config[CONF_BATTERY_VOLTAGE])
     pv = _number(hass, config[CONF_PV_POWER])
     load = _number(hass, config[CONF_LOAD_POWER])
-    reserve = _number(hass, config[CONF_MIN_SOC])
-    ev = _number(hass, config.get(CONF_EV_POWER)) if config.get(CONF_EV_POWER) else 0.0
+    # Never read the reserve back from the GX minimum-SOC entity: the bridge
+    # writes that entity itself, so a raised preserve/export reserve would be
+    # fed back as the new reserve and ratchet up to the 95% cap. Use the
+    # captured baseline, or the configured floor before writes are armed.
+    baseline_min = (getattr(runtime, "baseline", None) or {}).get(CONF_MIN_SOC)
+    reserve = float(baseline_min) if baseline_min is not None else float(settings[OPT_RESERVE_FLOOR])
+    ev =_number(hass, config.get(CONF_EV_POWER)) if config.get(CONF_EV_POWER) else 0.0
 
     if None in (soc, volts, pv, load, reserve, ev):
         return ShadowResult(
